@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Api\ArtikelTerbaruController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BeritaController;
+use App\Http\Controllers\Api\CaptchaController;
 use App\Http\Controllers\Api\CekTunggakanController;
 use App\Http\Controllers\Api\ImporKramaController;
 use App\Http\Controllers\Api\ImporPembayaranController;
+use App\Http\Controllers\Api\KategoriBeritaController;
 use App\Http\Controllers\Api\KramaController;
 use App\Http\Controllers\Api\LaporanWargaController;
 use App\Http\Controllers\Api\PeriodeIuranController;
@@ -18,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/cek-tunggakan', CekTunggakanController::class)->middleware('throttle:10,1');
 Route::get('/artikel-terbaru', ArtikelTerbaruController::class)->middleware('throttle:60,1');
+Route::get('/captcha', CaptchaController::class)->middleware('throttle:30,1');
 Route::post('/laporan-warga', [LaporanWargaController::class, 'store'])->middleware('throttle:5,1');
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -77,5 +81,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/tagihan/validasi', [TagihanController::class, 'validasi']);
         Route::post('/tagihan/{tagihan}/koreksi', [TagihanController::class, 'koreksi']);
         Route::post('/tagihan/{tagihan}/dispensasi', [TagihanController::class, 'dispensasi']);
+
+        Route::get('/kategori-berita', [KategoriBeritaController::class, 'index']);
+        Route::post('/kategori-berita', [KategoriBeritaController::class, 'store']);
+        Route::put('/kategori-berita/{kategori}', [KategoriBeritaController::class, 'update']);
+        Route::delete('/kategori-berita/{kategori}', [KategoriBeritaController::class, 'destroy']);
+
+        Route::get('/berita', [BeritaController::class, 'index']);
+        Route::post('/berita', [BeritaController::class, 'store']);
+        Route::post('/berita/gambar', [BeritaController::class, 'unggahGambar'])->middleware('throttle:30,1');
+        Route::get('/berita/{berita}', [BeritaController::class, 'show'])->name('berita.show');
+        Route::put('/berita/{berita}', [BeritaController::class, 'update']);
+        Route::delete('/berita/{berita}', [BeritaController::class, 'destroy']);
     });
 });

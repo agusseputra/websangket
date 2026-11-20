@@ -5,10 +5,9 @@ namespace Tests\Feature;
 use App\Enums\StatusLaporan;
 use App\Models\LaporanWarga;
 use App\Models\User;
+use App\Services\CaptchaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class LaporanWargaTest extends TestCase
@@ -17,30 +16,17 @@ class LaporanWargaTest extends TestCase
 
     private const NIK = '5108010101900001';
 
-    private bool $captchaBerhasil = true;
+    private const KODE = 'K7XM4';
 
-    private bool $googleTerhubung = true;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        config(['services.recaptcha.secret' => 'rahasia-uji']);
-
-        Http::fake(['www.google.com/recaptcha/*' => function () {
-            if (! $this->googleTerhubung) {
-                throw new ConnectionException('Tidak terhubung');
-            }
-
-            return Http::response(['success' => $this->captchaBerhasil]);
-        }]);
-    }
-
+    /**
+     * Setiap laporan memakai CAPTCHA baru karena satu kode hanya berlaku sekali.
+     */
     private function dataTinggal(array $ubah = []): array
     {
         return [
             'nama' => 'Warga Baru', 'nik' => self::NIK, 'asal' => 'Denpasar', 'jenis' => 'tinggal',
-            'alamat' => 'Griya Jro B1', 'tanggal_mulai' => '2026-11-01', 'menetap' => true, 'captcha' => 'token-uji',
+            'alamat' => 'Griya Jro B1', 'tanggal_mulai' => '2026-11-01', 'menetap' => true,
+            'captcha_kunci' => app(CaptchaService::class)->buat(self::KODE)['kunci'], 'captcha' => self::KODE,
             ...$ubah,
         ];
     }
@@ -55,8 +41,6 @@ class LaporanWargaTest extends TestCase
         $this->assertTrue($laporan->menetap);
         $this->assertNull($laporan->tanggal_selesai);
         $this->assertStringNotContainsString(self::NIK, DB::table('laporan_warga')->value('nik'));
-
-        Http::assertSent(fn ($permintaan) => $permintaan['secret'] === 'rahasia-uji' && $permintaan['response'] === 'token-uji');
     }
 
     public function test_laporan_usaha_wajib_nama_dan_jenis_usaha(): void
@@ -95,7 +79,7 @@ class LaporanWargaTest extends TestCase
     {
         $this->postJson('/api/laporan-warga', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['nama', 'nik', 'asal', 'jenis', 'alamat', 'tanggal_mulai', 'menetap', 'captcha']);
+            ->assertJsonValidationErrors(['nama', 'nik', 'asal', 'jenis', 'alamat', 'tanggal_mulai', 'menetap', 'captcha_kunci', 'captcha' => 'Ketik kode CAPTCHA pada gambar.']);
 
         $this->postJson('/api/laporan-warga', $this->dataTinggal(['nik' => '123']))->assertUnprocessable()->assertJsonValidationErrors('nik');
         $this->postJson('/api/laporan-warga', $this->dataTinggal(['jenis' => 'lain']))->assertUnprocessable()->assertJsonValidationErrors('jenis');
@@ -104,27 +88,40 @@ class LaporanWargaTest extends TestCase
         $this->assertSame(StatusLaporan::Pending, LaporanWarga::firstOrFail()->status);
     }
 
-    public function test_captcha_ditolak_jika_gagal_atau_google_tidak_bisa_dihubungi(): void
+    public function test_captcha_salah_kedaluwarsa_atau_dipakai_ulang_ditolak(): void
     {
-        $this->captchaBerhasil = false;
-        $this->postJson('/api/laporan-warga', $this->dataTinggal())->assertUnprocessable()->assertJsonValidationErrors('captcha');
+        $pesan = 'Kode CAPTCHA salah atau kedaluwarsa. Ketik kode pada gambar yang baru.';
 
-        $this->googleTerhubung = false;
-        $this->postJson('/api/laporan-warga', $this->dataTinggal())->assertUnprocessable()->assertJsonValidationErrors('captcha');
+        $this->postJson('/api/laporan-warga', $this->dataTinggal(['captcha' => 'AAAAA']))
+            ->assertUnprocessable()->assertJsonValidationErrors(['captcha' => $pesan]);
 
-        $this->assertSame(0, LaporanWarga::count());
+        $this->postJson('/api/laporan-warga', $this->dataTinggal(['captcha_kunci' => '9d3c1f8e-0000-4000-8000-000000000000']))
+            ->assertUnprocessable()->assertJsonValidationErrors(['captcha' => $pesan]);
+
+        $data = $this->dataTinggal(['captcha' => 'k7xm4']);
+        $this->postJson('/api/laporan-warga', $data)->assertCreated();
+        $this->postJson('/api/laporan-warga', $data)->assertUnprocessable()->assertJsonValidationErrors(['captcha' => $pesan]);
+
+        $this->assertSame(1, LaporanWarga::count());
     }
 
-    public function test_tanpa_kunci_captcha_produksi_menolak_dan_lokal_mengizinkan(): void
+    public function test_captcha_tetap_berlaku_jika_isian_lain_masih_salah(): void
     {
-        config(['services.recaptcha.secret' => null]);
+        $data = $this->dataTinggal();
 
-        $this->app['env'] = 'production';
-        $this->postJson('/api/laporan-warga', $this->dataTinggal())->assertUnprocessable()->assertJsonValidationErrors('captcha');
-        $this->assertSame(0, LaporanWarga::count());
+        $this->postJson('/api/laporan-warga', [...$data, 'nik' => '123'])
+            ->assertUnprocessable()->assertJsonValidationErrors('nik')->assertJsonMissingValidationErrors('captcha');
 
-        $this->app['env'] = 'local';
-        $this->postJson('/api/laporan-warga', $this->dataTinggal(['captcha' => null]))->assertCreated();
+        $this->postJson('/api/laporan-warga', $data)->assertCreated();
+    }
+
+    public function test_captcha_kedaluwarsa_setelah_sepuluh_menit(): void
+    {
+        $data = $this->dataTinggal();
+
+        $this->travel(CaptchaService::BERLAKU_MENIT + 1)->minutes();
+
+        $this->postJson('/api/laporan-warga', $data)->assertUnprocessable()->assertJsonValidationErrors('captcha');
     }
 
     public function test_pengiriman_laporan_dibatasi_per_menit(): void

@@ -54,6 +54,7 @@ class RingkasanController extends Controller
             ->selectRaw("jenis,
                 SUM(total_tagihan) as tagihan,
                 SUM(CASE WHEN status = 'valid' THEN nominal_bayar ELSE 0 END) as valid,
+                SUM(CASE WHEN status = 'valid' THEN 1 ELSE 0 END) as baris_valid,
                 SUM(CASE WHEN status IN ('dibayar', 'pending') THEN nominal_bayar ELSE 0 END) as belum_dihitung,
                 ".Tagihan::SQL_TUNGGAKAN.' as tunggakan')
             ->groupBy('jenis')
@@ -65,6 +66,7 @@ class RingkasanController extends Controller
             'label' => $satu->label(),
             'tagihan' => (int) ($perJenis[$satu->value]->tagihan ?? 0),
             'valid' => (int) ($perJenis[$satu->value]->valid ?? 0),
+            'baris_valid' => (int) ($perJenis[$satu->value]->baris_valid ?? 0),
             'belum_dihitung' => (int) ($perJenis[$satu->value]->belum_dihitung ?? 0),
             'tunggakan' => (int) ($perJenis[$satu->value]->tunggakan ?? 0),
         ]);

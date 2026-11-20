@@ -7,19 +7,20 @@ use App\Enums\StatusLaporan;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LaporanWargaResource;
 use App\Models\LaporanWarga;
-use App\Rules\ValidRecaptcha;
+use App\Services\CaptchaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LaporanWargaController extends Controller
 {
     /**
      * Laporan warga dari landing page, tanpa login.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, CaptchaService $captcha): JsonResponse
     {
         $data = $request->validate([
             'nama' => ['required', 'string', 'max:150'],
@@ -32,15 +33,23 @@ class LaporanWargaController extends Controller
             'tanggal_mulai' => ['required', 'date'],
             'menetap' => ['required', 'boolean'],
             'tanggal_selesai' => ['exclude_if:menetap,true', 'required', 'date', 'after_or_equal:tanggal_mulai'],
-            'captcha' => [...(ValidRecaptcha::dibutuhkan() ? ['required'] : ['nullable']), 'string', new ValidRecaptcha],
+            'captcha_kunci' => ['required', 'uuid'],
+            'captcha' => ['required', 'string', 'max:10'],
         ], [
             'nik.digits' => 'NIK harus 16 digit angka.',
             'tanggal_selesai.required' => 'Isi tanggal selesai, atau pilih menetap.',
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
-            'captcha.required' => 'Centang verifikasi CAPTCHA terlebih dahulu.',
+            'captcha_kunci.required' => 'Muat ulang kode CAPTCHA.',
+            'captcha_kunci.uuid' => 'Muat ulang kode CAPTCHA.',
+            'captcha.required' => 'Ketik kode CAPTCHA pada gambar.',
         ]);
 
-        unset($data['captcha']);
+        // CAPTCHA diperiksa setelah isian lain lolos, agar kodenya tidak hangus hanya karena isian lain salah.
+        if (! $captcha->periksa($data['captcha_kunci'], $data['captcha'])) {
+            throw ValidationException::withMessages(['captcha' => 'Kode CAPTCHA salah atau kedaluwarsa. Ketik kode pada gambar yang baru.']);
+        }
+
+        unset($data['captcha'], $data['captcha_kunci']);
 
         LaporanWarga::create($data);
 

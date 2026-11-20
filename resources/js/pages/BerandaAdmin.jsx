@@ -88,7 +88,7 @@ export default function BerandaAdmin() {
                         <StatCard
                             label="Krama bayar valid"
                             nilai={`${periode.krama_bayar_valid} / ${periode.krama_total}`}
-                            keterangan="Krama dengan pembayaran valid, dari semua krama"
+                            keterangan={`Dihitung per krama. ${periode.jenis.reduce((jumlah, satu) => jumlah + satu.baris_valid, 0)} pembayaran valid (${periode.jenis.map((satu) => `${satu.label} ${satu.baris_valid}`).join(', ')})`}
                             ke={`/tagihan?status=valid&tahun=${periode.tahun}`}
                             nilaiPanjang
                         />
