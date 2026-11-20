@@ -5,7 +5,7 @@ import { galatKolom, pesanGalat } from '../../lib/galat';
 import Alert from '../ui/Alert';
 import SelectField from '../ui/SelectField';
 import TextField from '../ui/TextField';
-import Recaptcha from './Recaptcha';
+import CaptchaGambar from './CaptchaGambar';
 
 const KOSONG = { nama: '', nik: '', asal: '', nama_usaha: '', jenis_usaha: '', alamat: '', tanggal_mulai: '', tanggal_selesai: '' };
 
@@ -17,7 +17,7 @@ const JENIS = [
 export default function LaporanForm({ jenis, onJenis }) {
     const [nilai, setNilai] = useState(KOSONG);
     const [menetap, setMenetap] = useState(false);
-    const [captcha, setCaptcha] = useState('');
+    const [captcha, setCaptcha] = useState({ kunci: '', jawaban: '' });
     const [galat, setGalat] = useState({});
     const [galatUmum, setGalatUmum] = useState('');
     const [berhasil, setBerhasil] = useState('');
@@ -35,6 +35,16 @@ export default function LaporanForm({ jenis, onJenis }) {
         setGalat({});
         setGalatUmum('');
         setBerhasil('');
+
+        // Pemeriksaan di browser sama dengan server, agar warga tidak perlu menunggu jawaban server.
+        if (captcha.jawaban.length < 5) {
+            setGalat({ captcha: 'Ketik 5 huruf dan angka pada gambar.' });
+            setGalatUmum('Periksa kembali isian yang ditandai.');
+            document.getElementById('laporan-captcha')?.focus();
+
+            return;
+        }
+
         setMemproses(true);
 
         try {
@@ -44,16 +54,24 @@ export default function LaporanForm({ jenis, onJenis }) {
                 jenis,
                 menetap,
                 tanggal_selesai: menetap ? null : nilai.tanggal_selesai || null,
-                captcha: captcha || null,
+                captcha_kunci: captcha.kunci,
+                captcha: captcha.jawaban,
             });
 
             setBerhasil(res.data.message);
             setNilai(KOSONG);
             setMenetap(false);
+            captchaRef.current?.muatUlang();
         } catch (error) {
             const kolom = galatKolom(error);
 
             setGalat(kolom);
+
+            // Kode yang sudah diperiksa server hangus, jadi diganti dengan kode baru.
+            if (kolom.captcha || kolom.captcha_kunci) {
+                setGalat((lama) => ({ ...lama, captcha: kolom.captcha ?? kolom.captcha_kunci }));
+                captchaRef.current?.muatUlang();
+            }
 
             if (error.response?.status === 429) {
                 setGalatUmum('Terlalu banyak laporan. Coba lagi dalam satu menit.');
@@ -61,7 +79,6 @@ export default function LaporanForm({ jenis, onJenis }) {
                 setGalatUmum(Object.keys(kolom).length > 0 ? 'Periksa kembali isian yang ditandai.' : pesanGalat(error, 'Laporan gagal dikirim.'));
             }
         } finally {
-            captchaRef.current?.reset();
             setMemproses(false);
         }
     }
@@ -113,10 +130,15 @@ export default function LaporanForm({ jenis, onJenis }) {
                 </div>
             </div>
 
-            <div className="grid gap-1">
-                <Recaptcha ref={captchaRef} onUbah={setCaptcha} />
-                {galat.captcha && <p className="text-sm text-gagal">{galat.captcha}</p>}
-            </div>
+            <CaptchaGambar
+                ref={captchaRef}
+                jawaban={captcha.jawaban}
+                onUbah={(baru) => {
+                    setCaptcha(baru);
+                    if (galat.captcha && baru.jawaban) setGalat((lama) => ({ ...lama, captcha: undefined }));
+                }}
+                galat={galat.captcha}
+            />
 
             {galatUmum && <Alert nada="gagal" role="alert">{galatUmum}</Alert>}
             {berhasil && <Alert nada="berhasil">{berhasil}</Alert>}

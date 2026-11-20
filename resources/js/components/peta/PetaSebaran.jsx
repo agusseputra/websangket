@@ -1,10 +1,8 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useImperativeHandle, useRef } from 'react';
-import { WARNA_PERUMAHAN, WARNA_STATUS } from '../../config/peta';
+import { PUSAT_SANGKET, WARNA_PERUMAHAN, WARNA_STATUS } from '../../config/peta';
 
-// Perkiraan pusat Lingkungan Sangket, Sukasada.
-const PUSAT_SANGKET = [-8.1405, 115.09];
 const ZOOM_AWAL = 15;
 const ZOOM_FOKUS = 19;
 

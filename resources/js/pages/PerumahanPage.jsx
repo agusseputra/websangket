@@ -82,7 +82,7 @@ export default function PerumahanPage() {
             <PageHeader judul="Perumahan" deskripsi="Daftar pilihan perumahan untuk data krama." />
             {(galat || galatHapus) && <Alert nada="gagal" role="alert">{galat || galatHapus}</Alert>}
 
-            <div className="grid items-start gap-6 lg:grid-cols-[26rem_1fr]">
+            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                 <Card judul={sedangDiubah ? `Ubah ${sedangDiubah.nama}` : 'Tambah perumahan'}>
                     <form onSubmit={simpan} className="grid gap-3">
                         <TextField id="nama-perumahan" label="Nama perumahan" required value={nama} onChange={(e) => setNama(e.target.value)} galat={galatForm} />
@@ -94,6 +94,7 @@ export default function PerumahanPage() {
                             galatBujur={galatTitik.longitude}
                             petunjuk="Opsional. Ketik koordinat, gunakan GPS, atau ketuk titik di peta."
                             inputManual
+                            tinggiPeta="h-[26rem] md:h-[34rem]"
                         />
                         <div className="flex flex-wrap justify-end gap-2">
                             {sedangDiubah && <Button varian="garis" onClick={reset}>Batal</Button>}

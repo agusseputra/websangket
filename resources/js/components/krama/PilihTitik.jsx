@@ -20,7 +20,7 @@ function titikUntukPeta(titik) {
     return lengkap && Math.abs(lintang) <= 90 && Math.abs(bujur) <= 180 ? { latitude: lintang, longitude: bujur } : null;
 }
 
-export default function PilihTitik({ titik, onUbah, galat, galatBujur, petunjuk, inputManual = false }) {
+export default function PilihTitik({ titik, onUbah, galat, galatBujur, petunjuk, inputManual = false, tinggiPeta }) {
     const [mencariGps, setMencariGps] = useState(false);
     const [galatGps, setGalatGps] = useState('');
     const titikPeta = titikUntukPeta(titik);
@@ -61,9 +61,10 @@ export default function PilihTitik({ titik, onUbah, galat, galatBujur, petunjuk,
                 </Button>
             </div>
 
-            <Suspense fallback={<div className="grid h-72 place-items-center rounded border border-garis text-sm text-redup md:h-96">Memuat peta...</div>}>
-                <PetaLokasi titik={titikPeta} onPilih={pilihDiPeta} />
+            <Suspense fallback={<div className={`grid place-items-center rounded border border-garis text-sm text-redup ${tinggiPeta ?? 'h-80 md:h-[28rem]'}`}>Memuat peta...</div>}>
+                <PetaLokasi titik={titikPeta} onPilih={pilihDiPeta} {...(tinggiPeta ? { tinggi: tinggiPeta } : {})} />
             </Suspense>
+            <p className="text-xs text-redup">Ketuk peta untuk menaruh pin, lalu geser pin untuk merapikan. Pilih <strong>Satelit</strong> di pojok kanan atas untuk melihat atap rumah, dan tombol di kiri atas untuk memperbesar peta.</p>
 
             {inputManual ? (
                 <div className="grid gap-3 sm:grid-cols-2">

@@ -62,6 +62,8 @@ class DashboardPetaTest extends TestCase
             ->assertJsonPath('periode.tunggakan_total', 75000)
             ->assertJsonPath('periode.jenis.0.jenis', 'dudukan')
             ->assertJsonPath('periode.jenis.0.valid', 325000)
+            ->assertJsonPath('periode.jenis.0.baris_valid', 2)
+            ->assertJsonPath('periode.jenis.1.baris_valid', 1)
             ->assertJsonPath('periode.jenis.0.belum_dihitung', 200000)
             ->assertJsonPath('periode.jenis.0.tunggakan', 75000)
             ->assertJsonPath('periode.jenis.1.jenis', 'penanjung_batu')

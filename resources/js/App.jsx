@@ -1,10 +1,13 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import { berandaUntuk, useAuth } from './context/AuthContext';
 import BerandaAdmin from './pages/BerandaAdmin';
 import BerandaPetugas from './pages/BerandaPetugas';
+import BeritaListPage from './pages/berita/BeritaListPage';
 import ImporKramaPage from './pages/ImporKramaPage';
+import KategoriBeritaPage from './pages/KategoriBeritaPage';
 import BayarPage from './pages/krama/BayarPage';
 import KramaDetailPage from './pages/krama/KramaDetailPage';
 import KramaFormPage from './pages/krama/KramaFormPage';
@@ -20,6 +23,9 @@ import PerumahanPage from './pages/PerumahanPage';
 import TagihanPage from './pages/TagihanPage';
 import TunggakanPage from './pages/TunggakanPage';
 import UjiPrinter from './pages/UjiPrinter';
+
+// Teks editor cukup besar, jadi halaman form berita dimuat terpisah agar halaman lain tetap ringan.
+const BeritaFormPage = lazy(() => import('./pages/berita/BeritaFormPage'));
 
 export default function App() {
     const { user, memuat } = useAuth();
@@ -42,8 +48,13 @@ export default function App() {
                         <Route path="/peta" element={<PetaPage />} />
                         <Route path="/laporan" element={<LaporanPage />} />
                         <Route path="/pengguna" element={<PenggunaPage />} />
+                        <Route path="/uji-printer" element={<UjiPrinter />} />
+                        <Route path="/berita" element={<BeritaListPage />} />
+                        <Route path="/berita/baru" element={<Suspense fallback={<p className="text-redup">Memuat editor...</p>}><BeritaFormPage /></Suspense>} />
+                        <Route path="/berita/:id/ubah" element={<Suspense fallback={<p className="text-redup">Memuat editor...</p>}><BeritaFormPage /></Suspense>} />
+                        <Route path="/kategori-berita" element={<KategoriBeritaPage />} />
                         <Route path="/petugas" element={<BerandaPetugas />} />
-                        </Route>
+                    </Route>
                     <Route path="/krama" element={<KramaListPage />} />
                     <Route path="/krama/baru" element={<KramaFormPage />} />
                     <Route path="/krama/:id" element={<KramaDetailPage />} />

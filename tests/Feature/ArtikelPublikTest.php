@@ -239,7 +239,12 @@ class ArtikelPublikTest extends TestCase
             ->assertSee('<title>LPD Desa Adat Sangket – Profil, Prajuru, dan Layanan</title>', false)
             ->assertSee('<link rel="canonical" href="'.url('/lpd').'">', false)
             ->assertSee('"@type":"FinancialService"', false)
-            ->assertSeeInOrder(['id="profil-lpd"', 'id="prajuru-lpd"', 'id="program-lpd"'], false)
+            ->assertSeeInOrder(['id="profil-lpd"', 'id="prajuru-lpd"', 'id="program-lpd"', 'id="tampan-lpd"', 'id="kendaraan-lpd"', 'id="keuntungan-lpd"'], false)
+            ->assertSeeInOrder(['Astra Motor Singaraja', 'Maha Surya Motor III', 'Duta Intika', 'Vespa Udayana'])
+            ->assertSee('data-lightbox>', false)
+            ->assertSee('<dialog id="lightbox-foto"', false)
+            ->assertSeeInOrder(['id="panel-tampan-tentang"', 'id="panel-tampan-keuntungan"', 'id="panel-tampan-syarat"', 'id="panel-tampan-simulasi"'], false)
+            ->assertSee('34.888.371')
             ->assertSee('aria-label="Navigasi LPD"', false);
 
         $this->assertSame(1, substr_count($respons->getContent(), '<h1'));

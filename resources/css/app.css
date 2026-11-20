@@ -270,3 +270,109 @@ body {
         color: #000000 !important;
     }
 }
+
+/* Teks editor berita (Quill) mengikuti token warna aplikasi, termasuk mode gelap. */
+.editor-berita {
+    & .ql-toolbar.ql-snow {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        border-color: var(--warna-garis);
+        border-radius: 0.25rem 0.25rem 0 0;
+        background: var(--warna-panel);
+    }
+
+    & .ql-container.ql-snow {
+        border-color: var(--warna-garis);
+        border-radius: 0 0 0.25rem 0.25rem;
+        background: var(--warna-latar);
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    & .ql-editor {
+        min-height: 22rem;
+        line-height: 1.7;
+
+        & img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.25rem;
+        }
+
+        &.ql-blank::before {
+            color: var(--warna-redup);
+            font-style: normal;
+        }
+    }
+
+    & .ql-snow .ql-stroke {
+        stroke: var(--warna-teks);
+    }
+
+    & .ql-snow .ql-fill {
+        fill: var(--warna-teks);
+    }
+
+    & .ql-snow .ql-picker {
+        color: var(--warna-teks);
+    }
+
+    & .ql-snow .ql-picker-options,
+    & .ql-snow .ql-tooltip {
+        border-color: var(--warna-garis);
+        background: var(--warna-panel);
+        color: var(--warna-teks);
+        box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+    }
+
+    & .ql-snow .ql-tooltip input[type='text'] {
+        border-color: var(--warna-garis);
+        background: var(--warna-latar);
+        color: var(--warna-teks);
+    }
+
+    & .ql-snow button:hover .ql-stroke,
+    & .ql-snow button.ql-active .ql-stroke,
+    & .ql-snow .ql-picker-label:hover .ql-stroke,
+    & .ql-snow .ql-picker-label.ql-active .ql-stroke {
+        stroke: var(--warna-utama);
+    }
+
+    & .ql-snow button:hover .ql-fill,
+    & .ql-snow button.ql-active .ql-fill {
+        fill: var(--warna-utama);
+    }
+
+    & .ql-snow a,
+    & .ql-snow .ql-picker-label:hover,
+    & .ql-snow .ql-picker-label.ql-active,
+    & .ql-snow .ql-picker-item:hover,
+    & .ql-snow .ql-picker-item.ql-selected {
+        color: var(--warna-utama);
+    }
+
+    &.editor-galat .ql-toolbar.ql-snow,
+    &.editor-galat .ql-container.ql-snow {
+        border-color: var(--warna-gagal);
+    }
+}
+
+/* Tombol tambahan di atas peta Leaflet, misalnya perbesar peta. */
+.tombol-peta {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: #fff;
+    color: #1d2a30;
+    cursor: pointer;
+
+    &:hover {
+        background: #f4f4f4;
+    }
+}
+
+.penanda-pin {
+    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35));
+}
